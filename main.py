@@ -141,7 +141,7 @@ async def get_auth_headers(
 # Routes
 @api_app.get("/")
 async def root():
-    return {"message": "Databricks Chat API is running"}
+    return {"message": "Procurement Bot API is running"}
 
 # API Routes
 @api_app.get("/config")

@@ -676,7 +676,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       <MessageContainer isUser={false} data-testid="bot-message-container" style={{ marginBottom: '20px' }}>
         <ModelInfo data-testid="model-info">
           <ModelIcon data-testid="model-icon" />
-          <ModelName data-testid="model-name">{'Knowledge Assistant'}</ModelName>
+          <ModelName data-testid="model-name">{'Procurement Bot'}</ModelName>
         </ModelInfo>
         <BotMessageContent ref={chatContentRef}>
           <ThinkingIndicator>
@@ -693,7 +693,7 @@ const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
       <ModelInfo data-testid="model-info">
         <ModelIcon data-testid="model-icon" />
         <ModelName data-testid="model-name">
-          {'Knowledge Assistant'}
+          {'Procurement Bot'}
         </ModelName>
         {message.trace_id && (
           <TraceLink 

@@ -25,8 +25,8 @@ class LangGraphChatAgent(ChatAgent):
         # If not provided, fetch workflow from compile.py
         if app_or_workflow is None:
             try:
-                from agent_build_v2.run_toolnode import graph # lazy import
-                from agent_build.compile import get_pg_checkpointer  # lazy import to avoid cycles
+                from agent_build.run_toolnode import graph # lazy import
+                from agent_build.utils import get_pg_checkpointer  # lazy import to avoid cycles
                 app_or_workflow = graph
             except Exception as _e:  # noqa: F841
                 raise RuntimeError(f"Failed to import workflow from agent_build_v2.run_toolnode: {_e}") from _e
@@ -36,7 +36,7 @@ class LangGraphChatAgent(ChatAgent):
             self.graph = app_or_workflow
         else:
             # Compile with checkpointer strictly; require Postgres when available
-            from agent_build.compile import get_pg_checkpointer  # lazy import to avoid cycles
+            from aagent_build.utils import get_pg_checkpointer  # lazy import to avoid cycles
             with get_pg_checkpointer() as checkpointer:  # type: ignore[misc]
                 self.graph = app_or_workflow.compile(checkpointer=checkpointer)
         

@@ -12,6 +12,8 @@ from databricks.sdk import WorkspaceClient
 from unitycatalog.ai.langchain.toolkit import UCFunctionToolkit
 from unitycatalog.ai.core.databricks import DatabricksFunctionClient
 from langgraph.types import interrupt
+from psycopg import connect
+from langgraph.checkpoint.postgres import PostgresSaver
 
 # =============================================================================
 # LOGGING CONFIGURATION
@@ -488,3 +490,41 @@ def build_db_uri(username, instance_name, use_sp=True):
     # Connection parameters with chatbot_schema
     db_uri = f"postgresql://{username}:{pgpassword}@{host}:5432/databricks_postgres?sslmode=require&options=-csearch_path%3Dchatbot_schema"
     return db_uri
+
+
+@contextmanager
+def get_pg_checkpointer():
+    """Yield a PostgresSaver backed by a psycopg connection with robust settings.
+
+    Ensures autocommit and dict_row, and adds TCP keepalive parameters to reduce
+    unexpected SSL socket closures on long-running streams.
+    """
+    username = os.getenv("CLIENT_ID")
+    instance_name = os.getenv("DB_INSTANCE_NAME")
+    databricks_host = os.getenv("DATABRICKS_HOST")
+
+    if not (username and instance_name):
+        yield None
+        return
+
+
+    uri = build_db_uri(username, instance_name, use_sp=True)
+
+    # Append keepalive parameters to URI to reduce idle disconnects
+    keepalive_params = "keepalives=1&keepalives_idle=30&keepalives_interval=10&keepalives_count=5"
+    if "?" in uri:
+        if "keepalives=" not in uri:
+            uri = f"{uri}&{keepalive_params}"
+    else:
+        uri = f"{uri}?{keepalive_params}"
+
+    # IMPORTANT: Keep the connection open for the duration of the caller using this saver.
+    # Do NOT close the connection on context exit. The caller is responsible for lifecycle.
+    conn = connect(uri, autocommit=True, row_factory=dict_row)
+    saver = PostgresSaver(conn)
+    try:
+        yield saver
+    finally:
+        # Intentionally do not close the connection here to avoid breaking long-lived streams/state loads.
+        # The process exit or explicit shutdown should close it.
+        pass
